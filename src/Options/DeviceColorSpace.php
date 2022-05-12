@@ -4,47 +4,30 @@ namespace Webit\PHPgs\Options;
 
 final class DeviceColorSpace
 {
-    /** @var string */
-    private $colorSpace;
+	private function __construct(
+		private string $colorSpace
+	) {}
 
-    /**
-     * DeviceColorSpace constructor.
-     * @param string $colorSpace
-     */
-    private function __construct($colorSpace)
-    {
-        $this->colorSpace = (string)$colorSpace;
-    }
+	public static function gray(): DeviceColorSpace
+	{
+		return new self('/DeviceGray');
+	}
 
-    /**
-     * @return DeviceColorSpace
-     */
-    public static function gray()
-    {
-        return new self('/DeviceGray');
-    }
+	public static function rgb(): DeviceColorSpace
+	{
+		return new self('/DeviceRGB');
+	}
 
-    /**
-     * @return DeviceColorSpace
-     */
-    public static function rgb()
-    {
-        return new self('/DeviceRGB');
-    }
+	public static function cmyk(): DeviceColorSpace
+	{
+		return new self('/DeviceCMYK');
+	}
 
-    /**
-     * @return DeviceColorSpace
-     */
-    public static function cmyk()
-    {
-        return new self('/DeviceCMYK');
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function __toString()
-    {
-        return $this->colorSpace;
-    }
+	/**
+	 * @inheritDoc
+	 */
+	public function __toString()
+	{
+		return $this->colorSpace;
+	}
 }

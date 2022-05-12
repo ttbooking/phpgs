@@ -1,43 +1,31 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs;
 
+use RuntimeException;
 use Symfony\Component\Process\Process;
 
-class GhostScriptExecutionException extends \RuntimeException
+class GhostScriptExecutionException extends RuntimeException
 {
-    /** @var string */
-    private $command;
+	private string $command;
+	private string $output;
 
-    /** @var string */
-    private $output;
+	public static function fromProcess(Process $process): GhostScriptExecutionException
+	{
+		$exception = new self('Error during GhostScript command execution.');
+		$exception->command = $process->getCommandLine();
+		$exception->output = $process->getOutput();
 
-    /**
-     * @param Process $process
-     * @return GhostScriptExecutionException
-     */
-    public static function fromProcess(Process $process)
-    {
-        $exception = new self('Error during GhostScript command execution.');
-        $exception->command = $process->getCommandLine();
-        $exception->output = $process->getOutput();
+		return $exception;
+	}
 
-        return $exception;
-    }
+	public function command(): string
+	{
+		return $this->command;
+	}
 
-    /**
-     * @return string
-     */
-    public function command()
-    {
-        return $this->command;
-    }
-
-    /**
-     * @return string
-     */
-    public function output()
-    {
-        return $this->output;
-    }
+	public function output(): string
+	{
+		return $this->output;
+	}
 }

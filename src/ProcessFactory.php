@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs;
 
@@ -7,46 +7,25 @@ use Webit\PHPgs\Options\Options;
 
 class ProcessFactory
 {
-    /** @var string */
-    private $gsBin;
+	public function __construct(
+		private string $gsBin = 'gs'
+	) {}
 
-    /**
-     * ProcessFactory constructor.
-     * @param string $gsBin
-     */
-    public function __construct($gsBin = 'gs')
-    {
-        $this->gsBin = $gsBin;
-    }
+	public function createProcess(Input $input, Output $output, Options $options): Process
+	{
+		$this->ensureOutputDirExists($output);
+		$options = $options->withOption('-sOutputFile', $output);
 
-    /**
-     * @param Input $input
-     * @param Output $output
-     * @param Options $options
-     * @return Process
-     */
-    public function createProcess(Input $input, Output $output, Options $options)
-    {
-        $this->ensureOutputDirExists($output);
-        $cmd = sprintf(
-            '%s %s -sOUTPUTFILE=%s %s',
-            $this->gsBin,
-            (string)$options,
-            (string)$output,
-            (string)$input
-        );
+		return new Process(
+			array_merge([$this->gsBin], $options->toProcessArguments(), $input->files())
+		);
+	}
 
-        return new Process($cmd);
-    }
-
-    /**
-     * @param Output $output
-     */
-    private function ensureOutputDirExists(Output $output)
-    {
-        $dir = dirname($output->filenameOrPattern());
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-    }
+	private function ensureOutputDirExists(Output $output): void
+	{
+		$dir = dirname($output->filenameOrPattern());
+		if (!is_dir($dir)) {
+			@mkdir($dir, 0755, true);
+		}
+	}
 }

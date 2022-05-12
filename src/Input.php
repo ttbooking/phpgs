@@ -1,65 +1,54 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs;
 
-final class Input implements \IteratorAggregate
+use ArrayIterator;
+use IteratorAggregate;
+
+final class Input implements IteratorAggregate
 {
-    /** @var string[] */
-    private $files;
+	/** @param string[] $files */
+	private function __construct(
+		private array $files
+	) {}
 
-    /**
-     * Input constructor.
-     * @param string[] $files
-     */
-    private function __construct(array $files)
-    {
-        $this->files = $files;
-    }
+	public static function singleFile(string $file): Input
+	{
+		return new self(array($file));
+	}
 
-    /**
-     * @param $file
-     * @return Input
-     */
-    public static function singleFile($file)
-    {
-        return new self(array($file));
-    }
+	/** @param string[] $files */
+	public static function multipleFiles(array $files): Input
+	{
+		return new self($files);
+	}
 
-    /**
-     * @param string[] $files
-     * @return Input
-     */
-    public static function multipleFiles(array $files)
-    {
-        return new self($files);
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function getIterator(): ArrayIterator
+	{
+		return new ArrayIterator($this->files);
+	}
 
-    /**
-     * @return string[]
-     */
-    public function files()
-    {
-        return $this->files;
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function __toString()
+	{
+		$files = array();
+		foreach ($this->files() as $file) {
+			$files[] = escapeshellarg($file);
+		}
 
-    /**
-     * @inheritdoc
-     */
-    public function getIterator()
-    {
-        return new \ArrayIterator($this->files);
-    }
+		return implode(' ', $files);
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function __toString()
-    {
-        $files = array();
-        foreach ($this->files() as $file) {
-            $files[] = escapeshellarg($file);
-        }
-
-        return implode(' ', $files);
-    }
+	/**
+	 * @return string[]
+	 */
+	public function files(): array
+	{
+		return $this->files;
+	}
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs\Pdf;
 
@@ -8,11 +8,5 @@ use Webit\PHPgs\Output;
 
 interface Merger
 {
-    /**
-     * @param Input $input
-     * @param Output $output
-     * @param Options|null $options
-     * @return
-     */
-    public function merge(Input $input, Output $output, Options $options = null);
+	public function merge(Input $input, Output $output, ?Options $options = null): void;
 }

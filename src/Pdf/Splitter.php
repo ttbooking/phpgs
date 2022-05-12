@@ -8,13 +8,11 @@ use Webit\PHPgs\Output;
 
 interface Splitter
 {
-    /**
-     * @param Input $input
-     * @param Output $output
-     * @param int $pageFrom
-     * @param int $pageTo
-     * @param Options|null $options
-     * @return
-     */
-    public function split(Input $input, Output $output, $pageFrom = null, $pageTo = null, Options $options = null);
+	public function split(
+		Input $input,
+		Output $output,
+		?int $pageFrom = null,
+		?int $pageTo = null,
+		?Options $options = null
+	): void;
 }

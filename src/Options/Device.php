@@ -4,56 +4,35 @@ namespace Webit\PHPgs\Options;
 
 final class Device
 {
-    /** @var string */
-    private $device;
+	private function __construct(
+		private string $device
+	) {}
 
-    /**
-     * Device constructor.
-     * @param string $device
-     */
-    private function __construct($device)
-    {
-        $this->device = (string)$device;
-    }
+	public static function jpeg(): Device
+	{
+		return new self('jpeg');
+	}
 
-    /**
-     * @return Device
-     */
-    public static function jpeg()
-    {
-        return new self('jpeg');
-    }
+	public static function png256(): Device
+	{
+		return new self('png256');
+	}
 
-    /**
-     * @return Device
-     */
-    public static function png256()
-    {
-        return new self('png256');
-    }
+	public static function pdfWrite(): Device
+	{
+		return new self('pdfwrite');
+	}
 
-    /**
-     * @return Device
-     */
-    public static function pdfWrite()
-    {
-        return new self('pdfwrite');
-    }
+	public static function any(string $device): Device
+	{
+		return new self($device);
+	}
 
-    /**
-     * @param string $device
-     * @return Device
-     */
-    public static function any($device)
-    {
-        return new self($device);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function __toString()
-    {
-        return $this->device;
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function __toString()
+	{
+		return $this->device;
+	}
 }

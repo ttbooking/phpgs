@@ -1,82 +1,77 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs;
 
+use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Mockery\MockInterface;
 use Symfony\Component\Process\Process;
 use Webit\PHPgs\Options\Options;
 
 class ExecutorTest extends AbstractTest
 {
-    /**
-     * @var ProcessFactory|\Mockery\MockInterface
-     */
-    private $processFactory;
+	use MockeryPHPUnitIntegration;
 
-    /**
-     * @var Executor
-     */
-    private $executor;
+	private ProcessFactory|MockInterface $processFactory;
+	private Executor $executor;
 
-    protected function setUp()
-    {
-        $this->processFactory = \Mockery::mock('Webit\PHPgs\ProcessFactory');
-        $this->executor = new Executor($this->processFactory);
-    }
+	/**
+	 * @test
+	 */
+	public function shouldExecuteGsCommand()
+	{
+		$input = Input::singleFile($this->randomPathname());
+		$output = Output::create($this->randomPathname());
+		$options = Options::create();
 
-    /**
-     * @test
-     */
-    public function shouldExecuteGsCommand()
-    {
-        $input = Input::singleFile($this->randomPathname());
-        $output = Output::create($this->randomPathname());
-        $options = Options::create();
+		$process = $this->mockProcess();
+		$this->processFactory
+			->shouldReceive('createProcess')
+			->with($input, $output, $options)
+			->andReturn($process)
+			->once();
 
-        $process = $this->mockProcess();
-        $this->processFactory
-            ->shouldReceive('createProcess')
-            ->with($input, $output, $options)
-            ->andReturn($process)
-            ->once();
+		$process->shouldReceive('run')->andReturn(0)->once();
 
-        $process->shouldReceive('run')->andReturn(0)->once();
+		$this->executor->execute($input, $output, $options);
+	}
 
-        $this->executor->execute($input, $output, $options);
-    }
+	private function mockProcess(): Process|MockInterface
+	{
+		$process = Mockery::mock(Process::class);
 
-    /**
-     * @test
-     * @expectedException \Webit\PHPgs\GhostScriptExecutionException
-     */
-    public function shouldThrowExceptionOnCommandExecutionFailure()
-    {
-        $input = Input::singleFile($this->randomPathname());
-        $output = Output::create($this->randomPathname());
-        $options = Options::create();
+		$process->shouldReceive('stop');
 
-        $process = $this->mockProcess();
-        $this->processFactory
-            ->shouldReceive('createProcess')
-            ->with($input, $output, $options)
-            ->andReturn($process)
-            ->once();
+		return $process;
+	}
 
-        $process->shouldReceive('run')->andReturn(2)->once();
-        $process->shouldReceive('getCommandLine')->andReturn($this->randomPathname());
-        $process->shouldReceive('getOutput')->andReturn($this->randomString());
+	/**
+	 * @test
+	 */
+	public function shouldThrowExceptionOnCommandExecutionFailure()
+	{
+		$this->expectException(GhostScriptExecutionException::class);
+		$input = Input::singleFile($this->randomPathname());
+		$output = Output::create($this->randomPathname());
+		$options = Options::create();
 
-        $this->executor->execute($input, $output, $options);
-    }
+		$process = $this->mockProcess();
+		$this->processFactory
+			->shouldReceive('createProcess')
+			->with($input, $output, $options)
+			->andReturn($process)
+			->once();
 
-    /**
-     * @return \Mockery\MockInterface|Process
-     */
-    private function mockProcess()
-    {
-        $process = \Mockery::mock('Symfony\Component\Process\Process');
+		$process->shouldReceive('run')->andReturn(2)->once();
+		$process->shouldReceive('getCommandLine')->andReturn($this->randomPathname());
+		$process->shouldReceive('getOutput')->andReturn($this->randomString());
 
-        $process->shouldReceive('stop');
+		$this->executor->execute($input, $output, $options);
+	}
 
-        return $process;
-    }
+	protected function setUp(): void
+	{
+		$this->processFactory = Mockery::mock(ProcessFactory::class);
+		$this->executor = new Executor($this->processFactory);
+	}
 }

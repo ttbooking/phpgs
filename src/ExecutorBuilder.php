@@ -1,34 +1,26 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs;
 
 class ExecutorBuilder
 {
-    /** @var string */
-    private $ghostScriptBinary = 'gs';
+	private string $ghostScriptBinary = 'gs';
 
-    public static function create()
-    {
-        return new self();
-    }
+	public static function create()
+	{
+		return new self();
+	}
 
-    /**
-     * @param $ghostScriptBinary
-     * @return $this
-     */
-    public function setGhostScriptBinary($ghostScriptBinary)
-    {
-        $this->ghostScriptBinary = $ghostScriptBinary;
-        return $this;
-    }
+	public function setGhostScriptBinary(string $ghostScriptBinary): static
+	{
+		$this->ghostScriptBinary = $ghostScriptBinary;
+		return $this;
+	}
 
-    /**
-     * @return Executor
-     */
-    public function build()
-    {
-        return new Executor(
-            new ProcessFactory($this->ghostScriptBinary)
-        );
-    }
+	public function build(): Executor
+	{
+		return new Executor(
+			new ProcessFactory($this->ghostScriptBinary)
+		);
+	}
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs\Pdf;
 
@@ -9,100 +9,92 @@ use Webit\PHPgs\Output;
 
 class PdfManipulatorIntegrationTest extends AbstractTest
 {
-    /** @var string[] */
-    private $tempDirs = array();
+	/** @var string[] */
+	private array $tempDirs = [];
+	private PdfManipulator $pdfManipulator;
 
-    /** @var PdfManipulator */
-    private $pdfManipulator;
+	/**
+	 * @test
+	 */
+	public function shouldSplitPdfPagesToMultipleFiles()
+	{
+		$input = Input::singleFile(__DIR__ . '/../Resources/lorem-ipsum.pdf');
+		$output = $this->pdfOutput(true);
+		$this->pdfManipulator->split($input, $output, 2, 5);
 
-    protected function setUp()
-    {
-        $this->pdfManipulator = new PdfManipulator(
-            ExecutorBuilder::create()->setGhostScriptBinary(getenv('gs.binary'))->build()
-        );
-    }
+		$files = $output->files();
+		$this->assertEquals(4, count($files));
+	}
 
-    /**
-     * @test
-     */
-    public function shouldSplitPdfPagesToMultipleFiles()
-    {
-        $input = Input::singleFile(__DIR__.'/../Resources/lorem-ipsum.pdf');
-        $output = $this->pdfOutput(true);
-        $this->pdfManipulator->split($input, $output, 2, 5);
+	private function pdfOutput(bool $multiple = false): Output
+	{
+		$dir = sprintf('%s/%s', sys_get_temp_dir(), $this->randomString());
+		$this->tempDirs[] = $dir;
 
-        $files = $output->files();
-        $this->assertEquals(4, count($files));
-    }
+		if ($multiple) {
+			return Output::create(sprintf('%s/%s-%%d.pdf', $dir, $this->randomString()));
+		}
 
-    /**
-     * @test
-     */
-    public function shouldSplitPdfPagesToSingleFile()
-    {
-        $input = Input::singleFile(__DIR__.'/../Resources/lorem-ipsum.pdf');
-        $output = $this->pdfOutput(false);
+		return Output::create(sprintf('%s/%s.pdf', $dir, $this->randomString()));
+	}
 
-        $this->pdfManipulator->split($input, $output, 2, 5);
+	/**
+	 * @test
+	 */
+	public function shouldSplitPdfPagesToSingleFile()
+	{
+		$input = Input::singleFile(__DIR__ . '/../Resources/lorem-ipsum.pdf');
+		$output = $this->pdfOutput();
 
-        $this->assertFileExists($output->filenameOrPattern());
-        $this->assertEquals(4, $this->countPdfPages($output->filenameOrPattern()));
-    }
+		$this->pdfManipulator->split($input, $output, 2, 5);
 
-    /**
-     * @test
-     */
-    public function shouldMergePdfPages()
-    {
-        $input = Input::multipleFiles(array(
-            __DIR__.'/../Resources/p1.pdf',
-            __DIR__.'/../Resources/p2.pdf',
-            __DIR__.'/../Resources/p3.pdf',
-            __DIR__.'/../Resources/p4.pdf'
-        ));
+		$this->assertFileExists($output->filenameOrPattern());
+		$this->assertEquals(4, $this->countPdfPages($output->filenameOrPattern()));
+	}
 
-        $output = $this->pdfOutput(false);
-        $this->pdfManipulator->merge($input, $output);
+	private function countPdfPages(string $filenameOrPattern): int
+	{
+		$imagick = new \Imagick($filenameOrPattern);
+		return $imagick->getNumberImages();
+	}
 
-        $this->assertFileExists($output->filenameOrPattern());
-        $this->assertEquals(4, $this->countPdfPages($output->filenameOrPattern()));
-    }
+	/**
+	 * @test
+	 */
+	public function shouldMergePdfPages()
+	{
+		$input = Input::multipleFiles(array(
+			__DIR__ . '/../Resources/p1.pdf',
+			__DIR__ . '/../Resources/p2.pdf',
+			__DIR__ . '/../Resources/p3.pdf',
+			__DIR__ . '/../Resources/p4.pdf'
+		));
 
-    /**
-     * @param string $filenameOrPattern
-     * @return int
-     */
-    private function countPdfPages($filenameOrPattern)
-    {
-        $imagick = new \Imagick($filenameOrPattern);
-        return $imagick->getNumberImages();
-    }
+		$output = $this->pdfOutput();
+		$this->pdfManipulator->merge($input, $output);
 
-    /**
-     * @param bool $multiple
-     * @return Output
-     */
-    private function pdfOutput($multiple = false)
-    {
-        $dir = sprintf('%s/%s', sys_get_temp_dir(), $this->randomString());
-        $this->tempDirs[] = $dir;
+		$this->assertFileExists($output->filenameOrPattern());
+		$this->assertEquals(4, $this->countPdfPages($output->filenameOrPattern()));
+	}
 
-        if ($multiple) {
-            return Output::create(sprintf('%s/%s-%%d.pdf', $dir, $this->randomString()));
-        }
+	public function tearDown(): void
+	{
+		foreach ($this->tempDirs as $dir) {
+			$di = new \DirectoryIterator($dir);
+			foreach ($di as $file) {
+				if ($file->isDot()) {
+					continue;
+				}
+				@unlink($file->getPathname());
+			}
+			@rmdir($dir);
+		}
+	}
 
-        return Output::create(sprintf('%s/%s.pdf', $dir, $this->randomString()));
-    }
-
-    public function tearDown()
-    {
-        foreach ($this->tempDirs as $dir) {
-            $di = new \DirectoryIterator($dir);
-            foreach ($di as $file) {
-                if ($file->isDot()) {continue;}
-                @unlink($file->getPathname());
-            }
-            @rmdir($dir);
-        }
-    }
+	protected function setUp(): void
+	{
+		$this->pdfManipulator = new PdfManipulator(
+			ExecutorBuilder::create()->setGhostScriptBinary(getenv('gs.binary'))->build()
+		);
+	}
 }

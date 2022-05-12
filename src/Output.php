@@ -1,68 +1,55 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs;
 
+use DirectoryIterator;
+
 final class Output implements \IteratorAggregate
 {
-    /** @var string */
-    private $filenameOrPattern;
+	private function __construct(
+		private string $filenameOrPattern
+	) {}
 
-    /**
-     * Output constructor.
-     * @param string $filenameOrPattern
-     */
-    private function __construct($filenameOrPattern)
-    {
-        $this->filenameOrPattern = (string)$filenameOrPattern;
-    }
+	public static function create(string $filenameOrPattern): Output
+	{
+		return new self($filenameOrPattern);
+	}
 
-    /**
-     * @param string $filenameOrPattern
-     * @return Output
-     */
-    public static function create($filenameOrPattern)
-    {
-        return new self($filenameOrPattern);
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function getIterator()
+	{
+		return new \ArrayIterator($this->files());
+	}
 
-    /**
-     * @return string
-     */
-    public function filenameOrPattern()
-    {
-        return $this->filenameOrPattern;
-    }
+	/**
+	 * @return string[]
+	 */
+	public function files(): array
+	{
+		$files = array();
+		foreach (new DirectoryIterator(dirname($this->filenameOrPattern())) as $file) {
+			if ($file->isDot()) {
+				continue;
+			}
+			$files[] = $file->getPathname();
+		}
+		sort($files, SORT_NATURAL);
 
-    /**
-     * @return string[]
-     */
-    public function files()
-    {
-        $files = array();
-        foreach (new \DirectoryIterator(dirname($this->filenameOrPattern())) as $file) {
-            if ($file->isDot()) {
-                continue;
-            }
-            $files[] = $file->getPathname();
-        }
-        sort($files, SORT_NATURAL);
+		return $files;
+	}
 
-        return $files;
-    }
+	public function filenameOrPattern(): string
+	{
+		return $this->filenameOrPattern;
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function getIterator()
-    {
-        return new \ArrayIterator($this->files());
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function __toString()
-    {
-        return escapeshellarg($this->filenameOrPattern());
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function __toString()
+	{
+		return $this->filenameOrPattern();
+	}
 }

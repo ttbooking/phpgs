@@ -1,7 +1,7 @@
 # PHPgs
 
-This package provides PHP Wrapper for **GhostScript**.
-It also provides a simple tool for **PDF** pages splitting / merging.
+This package provides PHP Wrapper for **GhostScript**. It also provides a simple tool for **PDF** pages splitting /
+merging.
 
 ## Installation
 
@@ -99,7 +99,8 @@ $pdfManipulator->split($input, $output, null, 10, $customOptions);
 
 ``` 
 
-**Note:** To make sure multi-page splitting will work properly, an output ***always*** must refer to an ***empty*** directory. 
+**Note:** To make sure multi-page splitting will work properly, an output ***always*** must refer to an ***empty***
+directory.
 
 ## Tests
 

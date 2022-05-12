@@ -1,185 +1,140 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Webit\PHPgs\Options;
 
+use Webit\PHPgs\Output;
+
 final class Options
 {
-    /** @var string[] */
-    private static $defaultOptions = array(
-        '-dNOPAUSE' => null,
-        '-dBATCH' => null,
-        '-dSAFER' => null
-    );
+	/** @var string[] */
+	private static array $defaultOptions = [
+		'-dNOPAUSE' => null,
+		'-dBATCH' => null,
+		'-dSAFER' => null
+	];
 
-    /**
-     * @var string[]
-     */
-    private $options;
+	/**
+	 * @var string[]
+	 */
+	private array $options;
 
-    /**
-     * Options constructor.
-     * @param array $options
-     */
-    private function __construct(array $options = array())
-    {
-        $this->options = array_replace(self::$defaultOptions, $options);
-    }
+	/**
+	 * Options constructor.
+	 * @param array $options
+	 */
+	private function __construct(array $options = array())
+	{
+		$this->options = array_replace(self::$defaultOptions, $options);
+	}
 
-    /**
-     * @param Device $device
-     * @return Options
-     */
-    public static function create(Device $device = null)
-    {
-        $options = new self();
-        return $options->withDevice($device ?: Device::pdfWrite());
-    }
+	public static function create(?Device $device = null): Options
+	{
+		$options = new self();
+		return $options->withDevice($device ?: Device::pdfWrite());
+	}
 
-    /**
-     * @param Device $device
-     * @return Options
-     */
-    public function withDevice(Device $device)
-    {
-        return $this->withOption('-sDEVICE', (string)$device);
-    }
+	public function withDevice(Device $device): Options
+	{
+		return $this->withOption('-sDEVICE', (string)$device);
+	}
 
-    /**
-     * @param Size $size
-     * @return Options
-     */
-    public function withSize(Size $size)
-    {
-        return $this->withOption(sprintf('-g%s', (string)$size));
-    }
+	/**
+	 * @param string $option
+	 * @param null|mixed $value
+	 * @return Options
+	 */
+	public function withOption(string $option, mixed $value = null): Options
+	{
+		$options = $this->options;
+		$options[$option] = $value !== null ? (string)$value : null;
 
-    /**
-     * @param CompatibilityLevel $compatibilityLevel
-     * @return Options
-     */
-    public function withCompatibilityLevel(CompatibilityLevel $compatibilityLevel)
-    {
-        return $this->withOption('-dCompatibilityLevel', (string)$compatibilityLevel);
-    }
+		return new self($options);
+	}
 
-    /**
-     * @return Options
-     */
-    public function withNoTransparency()
-    {
-        return $this->withOption('-dNOTRANSPARENCY');
-    }
+	public function withSize(Size $size): Options
+	{
+		return $this->withOption(sprintf('-g%s', $size));
+	}
 
-    /**
-     * @return Options
-     */
-    public function useCIEColor()
-    {
-        return $this->withOption('-dUseCIEColor', 'true');
-    }
+	public function withCompatibilityLevel(CompatibilityLevel $compatibilityLevel): Options
+	{
+		return $this->withOption('-dCompatibilityLevel', (string)$compatibilityLevel);
+	}
 
-    /**
-     * @param ColorConversionStrategy $colorConversionStrategy
-     * @return Options
-     */
-    public function withColorConversionStrategy(ColorConversionStrategy $colorConversionStrategy)
-    {
-        return $this->withOption('-dColorConversionStrategy', (string)$colorConversionStrategy);
-    }
+	public function withNoTransparency(): Options
+	{
+		return $this->withOption('-dNOTRANSPARENCY');
+	}
 
-    /**
-     * @param ColorConversionStrategy $colorConversionStrategy
-     * @return Options
-     */
-    public function withColorConversionStrategyForImages(ColorConversionStrategy $colorConversionStrategy)
-    {
-        return $this->withOption('-dColorConversionStrategyForImages', (string)$colorConversionStrategy);
-    }
+	public function useCIEColor(): Options
+	{
+		return $this->withOption('-dUseCIEColor', 'true');
+	}
 
-    /**
-     * @param DeviceColorSpace $colorSpace
-     * @return Options
-     */
-    public function withProcessColorModel(DeviceColorSpace $colorSpace)
-    {
-        return $this->withOption('-dProcessColorModel', (string)$colorSpace);
-    }
+	public function withColorConversionStrategy(ColorConversionStrategy $colorConversionStrategy): Options
+	{
+		return $this->withOption('-dColorConversionStrategy', (string)$colorConversionStrategy);
+	}
 
-    /**
-     * @param int|null $first
-     * @param int|null $last
-     * @return Options
-     */
-    public function withPageRange($first = null, $last = null)
-    {
-        $options = $this;
-        if ($first !== null) {
-            $options = $options->withOption('-dFirstPage', $first);
-        }
+	public function withColorConversionStrategyForImages(ColorConversionStrategy $colorConversionStrategy): Options
+	{
+		return $this->withOption('-dColorConversionStrategyForImages', (string)$colorConversionStrategy);
+	}
 
-        if ($last !== null) {
-            $options = $options->withOption('-dLastPage', $last);
-        }
+	public function withProcessColorModel(DeviceColorSpace $colorSpace): Options
+	{
+		return $this->withOption('-dProcessColorModel', (string)$colorSpace);
+	}
 
-        return $options;
-    }
+	public function withPageRange(?int $first = null, ?int $last = null): Options
+	{
+		$options = $this;
+		if ($first !== null) {
+			$options = $options->withOption('-dFirstPage', $first);
+		}
 
-    /**
-     * @param int $quality
-     * @return Options
-     */
-    public function withJpegQuality($quality)
-    {
-        return $this->withOption('-dJPEGQ', (int)$quality);
-    }
+		if ($last !== null) {
+			$options = $options->withOption('-dLastPage', $last);
+		}
 
-    /**
-     * @param int $x
-     * @param null|int $y
-     * @return Options
-     */
-    public function withResolution($x, $y = null)
-    {
-        $option = sprintf('-r%d', $x);
-        if ($y) {
-            $option = sprintf('-r%dx%d', $x, $y);
-        }
+		return $options;
+	}
 
-        return $this->withOption($option);
-    }
+	public function withJpegQuality(int $quality): Options
+	{
+		return $this->withOption('-dJPEGQ', $quality);
+	}
 
-    /**
-     * @return Options
-     */
-    public function useCropBox()
-    {
-        return $this->withOption('-dUseCropBox');
-    }
+	public function withResolution(int $x, ?int $y = null): Options
+	{
+		$option = sprintf('-r%d', $x);
+		if ($y) {
+			$option = sprintf('-r%dx%d', $x, $y);
+		}
 
-    /**
-     * @param string $option
-     * @param null|mixed $value
-     * @return Options
-     */
-    public function withOption($option, $value = null)
-    {
-        $options = $this->options;
-        $options[$option] = $value !== null ? (string)$value : null;
+		return $this->withOption($option);
+	}
 
-        return new self($options);
-    }
+	public function withOutputFile(Output|string $file): Options
+	{
+		return $this->withOption('-sOutputFile', $file);
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function __toString()
-    {
-        $options = array();
-        foreach ($this->options as $option => $value) {
-            $value = $value === null ? escapeshellarg($option) : sprintf('%s=%s', $option, escapeshellarg($value));
-            $options[] = $value;
-        }
+	public function useCropBox(): Options
+	{
+		return $this->withOption('-dUseCropBox');
+	}
 
-        return implode(' ', $options);
-    }
+	public function toProcessArguments(): array
+	{
+		$result = [];
+		foreach ($this->options as $option => $value) {
+			if (is_null($value)) {
+				$result[] = $option;
+			} else {
+				$result[] = sprintf('%s=%s', $option, $value);
+			}
+		}
+		return $result;
+	}
 }
