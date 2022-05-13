@@ -1,5 +1,5 @@
 {
-  "name": "webit/phpgs",
+  "name": "ttbooking/phpgs",
   "type": "library",
   "license": "MIT",
   "description": "PHP Wrapper for Ghost Script",
