@@ -6,7 +6,7 @@ merging.
 ## Installation
 
 ```bash
-composer require webit/phpgs=^1.0
+composer require ttbooking/phpgs
 ```
 
 ## Usage
